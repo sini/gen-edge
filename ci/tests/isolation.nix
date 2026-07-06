@@ -12,6 +12,8 @@ let
     ;
   fx = import ./_fixtures/graphs.nix { inherit lib; };
 
+  didThrow = e: !(builtins.tryEval (builtins.deepSeq e null)).success;
+
   graph = fx.mkGraph {
     tree = {
       R = [
@@ -56,6 +58,13 @@ let
       root = "I";
     };
   };
+
+  # A graph whose isolatedAt is a live throw-sentinel. Consulting the mark anywhere aborts; the resolved
+  # membership walk in edgesFor/project touches every child's mark, so building either over this graph
+  # forces the sentinel. materialize, taking no graph, cannot reach it — that asymmetry IS Law E3.
+  poisonedGraph = graph // {
+    isolatedAt = _: throw "poisoned isolation mark consulted";
+  };
 in
 {
   flake.tests.edge-isolation = {
@@ -90,22 +99,54 @@ in
       expected = false;
     };
 
-    # materialize takes only edges + projection — no graph, no marks. Poisoning isolatedAt after
-    # construction is structurally unable to change its output: recompute over a poisoned graph whose
-    # isolatedAt throws, reusing the ALREADY-resolved edges/pi — byte-identical.
+    # ── E3 enforcement sentinel: isolation is consumed at construction, materialize is blind to it ──
+    # The claim has two halves that must BOTH be witnessed, or "materialize unchanged" is vacuous
+    # (materialize takes no graph, so it cannot consult isolatedAt by construction regardless):
+    #   (a) edgesFor/project DO consume isolatedAt at construction — poisoning it there throws;
+    #   (b) materialize does NOT — even a Π carrying a live isolation mark folds unchanged.
+
+    # The sentinel is a real throw (not a value that silently forces to something).
+    test-poison-sentinel-live = {
+      expr = didThrow (poisonedGraph.isolatedAt "C");
+      expected = true;
+    };
+
+    # (a) edgesFor consumes isolatedAt at construction: the resolved membership walk touches every
+    # child's mark, so building the edge set over the poisoned graph forces the sentinel.
+    test-poison-consumed-by-edgesFor = {
+      expr = didThrow (edgesFor {
+        graph = poisonedGraph;
+        root = "R";
+      });
+      expected = true;
+    };
+
+    # (a) project likewise: forcing the derived membership over the poisoned graph forces the sentinel.
+    test-poison-consumed-by-project = {
+      expr =
+        didThrow
+          (project {
+            graph = poisonedGraph;
+            root = "R";
+          }).membership;
+      expected = true;
+    };
+
+    # (b) materialize is blind to isolation marks. Smuggle a live isolatedAt throw-sentinel INTO Π — the
+    # only surface materialize sees — over the ALREADY-resolved edges/Π: the fold consults resolved
+    # membership on edges + Π and never a mark, so output is byte-identical to the good run. A regression
+    # that re-added mark consultation to the fold would force the sentinel and throw here.
     test-poison-isolatedAt-unchanged = {
       expr =
         let
-          poisoned = graph // {
-            isolatedAt = _: throw "poisoned isolation mark";
-          };
-          # edges/pi were resolved over the good graph; materialize never consults `poisoned`.
-          cfg' = materialize {
-            edges = toposort edgesR;
-            projection = piR;
+          piPoisoned = piR // {
+            isolatedAt = _: throw "materialize consulted an isolation mark";
           };
         in
-        builtins.deepSeq poisoned (cfg' == cfgR);
+        materialize {
+          edges = toposort edgesR;
+          projection = piPoisoned;
+        } == cfgR;
       expected = true;
     };
   };
