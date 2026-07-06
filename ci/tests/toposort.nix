@@ -10,6 +10,8 @@ let
     targets
     edgesFor
     toposort
+    materialize
+    project
     readsOf
     writesOf
     ;
@@ -141,6 +143,17 @@ let
     };
     mode = "merge";
   };
+  # a valid Π to fold the unresolved edge against — the loud error fires before the enumeration runs.
+  unresolvedPi = project {
+    graph = fx.mkGraph {
+      buckets = {
+        R = {
+          nixos = [ (fx.c "seed" "s") ];
+        };
+      };
+    };
+    root = "R";
+  };
 in
 {
   flake.tests.edge-toposort = {
@@ -237,6 +250,16 @@ in
     # §2.2: an unresolved collected membership is a loud error at toposort.
     test-unresolved-members-throws = {
       expr = didThrow (toposort [ unresolvedEdge ]);
+      expected = true;
+    };
+
+    # §2.2: materialize rejects it too — a caller bypassing toposort and folding a hand-built collected
+    # edge directly gets the same named error, not a cryptic listToAttrs type error from the enumeration.
+    test-unresolved-members-materialize-throws = {
+      expr = didThrow (materialize {
+        edges = [ unresolvedEdge ];
+        projection = unresolvedPi;
+      });
       expected = true;
     };
   };

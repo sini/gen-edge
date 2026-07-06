@@ -119,7 +119,15 @@ let
       s = edge.source;
     in
     if s ? collected then
-      collectedUnion acc pi s
+      # An unresolved membership is a loud definition-time error here too, parallel to core.readsOf:
+      # a caller who bypasses toposort and folds a hand-built collected edge directly gets the named
+      # diagnostic rather than a cryptic listToAttrs type error from the enumeration (§2.2).
+      (
+        if s.collected.members == null then
+          throw "gen-edge.materialize: collected source for '${edgeSortKey edge}' has unresolved members (null) — build it via edgesFor, or supply an explicit resolved membership (spec §2.2)"
+        else
+          collectedUnion acc pi s
+      )
     else if s ? synthesize then
       (
         if !(interpret ? synthesize) then
