@@ -66,7 +66,16 @@ let
           "value:" + (if entry.source.key == null then "_" else entry.source.key);
       p = concatStringsSep "/" entry.path;
     in
-    t + " | " + p + " | " + s + " | " + entry.mode;
+    t
+    + " | "
+    + p
+    + " | "
+    + s
+    + " | "
+    + entry.mode
+    # a labeled entry appends its kind — the rendered trace carries K exactly when the sort key
+    # does; un-labeled entries render the historical four-component string (REFERENCE.md)
+    + (if (entry.kind or null) == null then "" else " | " + entry.kind);
 
   renderTrace = E: concatStringsSep "\n" (map renderEntry E);
 
@@ -74,5 +83,10 @@ let
   hashTrace = edges: builtins.hashString "sha256" (builtins.toJSON (trace edges));
 in
 {
-  inherit trace renderTrace hashTrace;
+  inherit
+    trace
+    renderTrace
+    renderEntry
+    hashTrace
+    ;
 }

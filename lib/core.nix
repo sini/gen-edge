@@ -104,7 +104,10 @@ let
     + " | "
     + sourceKey edge.source
     + " | "
-    + edge.mode;
+    + edge.mode
+    # a labeled edge appends its kind; un-labeled edges render the historical four-component key
+    # byte-identically (REFERENCE.md)
+    + (if (edge.kind or null) == null then "" else " | " + edge.kind);
 
   # ── structured trace entry (§4.5) — identity ONLY, never resolved content ────
   # The source projection carries identity fields (names, cell-refs, keys) and EXCLUDES every content
@@ -150,11 +153,16 @@ let
         inherit (target) class;
       };
 
-  traceEntryOf = edge: {
-    target = targetIdentity edge.target;
-    inherit (edge) path mode annotations;
-    source = sourceIdentity edge.source;
-  };
+  traceEntryOf =
+    edge:
+    {
+      target = targetIdentity edge.target;
+      inherit (edge) path mode annotations;
+      source = sourceIdentity edge.source;
+    }
+    # a labeled edge carries its kind field; un-labeled entries have exactly the historical
+    # attrset (no `kind` name present) so existing goldens stay byte-identical (REFERENCE.md)
+    // (if (edge.kind or null) == null then { } else { kind = edge.kind; });
 
   # ── accumulator cells & dependency sets (§4.3) ──────────────────────────────
   # Three cell-ref arms: an input `{ position; channel; }` cell (seeds + nest placements, read by

@@ -24,6 +24,9 @@ let
       mode ? "merge",
       adapt ? null,
       annotations ? { },
+      # the edge-kind label of the typed-edge vocabulary; null = an un-labeled edge, rendered
+      # exactly as before — see REFERENCE.md
+      kind ? null,
     }:
     let
       described = "${core.targetKey target} | ${core.pathKey path} | ${mode}";
@@ -47,6 +50,7 @@ let
           mode
           adapt
           annotations
+          kind
           ;
       };
 

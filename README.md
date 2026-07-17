@@ -70,7 +70,9 @@ never as input. Registry entries carrying `kind` + `idHash`/`id_hash` coerce to 
 
 ## The frozen edge algebra
 
-An edge is `{ source; target; path; mode; adapt; annotations; }`.
+An edge is `{ source; target; path; mode; adapt; annotations; kind; }`. `kind` (default `null`) is the
+optional typed-edge label — an un-labeled edge (`kind = null`) keys, traces and renders byte-identically to
+one built without the field; a labeled edge appends its kind as the `K` component (see `REFERENCE.md`).
 
 **Sources (S)** — where content comes from:
 

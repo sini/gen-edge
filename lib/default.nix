@@ -14,4 +14,14 @@ let
   toposort = import ./toposort.nix { inherit prelude core graph; };
   materialize = import ./materialize.nix { inherit prelude core; };
 in
-edge // trace // derive // project // toposort // materialize
+edge
+// trace
+// derive
+// project
+// toposort
+// materialize
+# the core sort-key / trace-entry primitives reach consumers (tests + den-hoag's oracle-adjacent
+# code) through the public surface; `core` itself stays unexported
+// {
+  inherit (core) edgeSortKey traceEntryOf;
+}
