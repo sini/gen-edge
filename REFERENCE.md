@@ -154,8 +154,9 @@ the only dedup is the declared `dedupMode` key dedup (null-keyed contributions n
 ### `trace edges` → `<E>`
 
 The normalized, stably-sorted, hashable list of trace entries (§4.5) — a pure, identity-level function of
-the edge SET (Laws E2/E4). Sorted by the frozen `(T,P,S,M)` key (§4.4) primary, canonical JSON of the
-structured entry secondary (total, permutation-invariant). Records identity only; **never forces resolved
+the edge SET (Laws E2/E4). Sorted by the frozen `(T,P,S,M[,K])` key (§4.4 — the optional `K` fifth
+component present only on labeled edges) primary, canonical JSON of the structured entry secondary (total,
+permutation-invariant). Records identity only; **never forces resolved
 content** (synthesize `module`, value content, collected bucket content are all excluded). A trace entry
 is `{ target; path; source; mode; annotations; }` with `source`/`target` carrying identity arms only — plus
 a `kind` field iff the edge is labeled (`kind ≠ null`); an un-labeled edge's entry has exactly the
