@@ -20,8 +20,10 @@ edge
 // project
 // toposort
 // materialize
-# the core sort-key / trace-entry primitives reach consumers (tests + den-hoag's oracle-adjacent
-# code) through the public surface; `core` itself stays unexported
+# the core sort-key / trace-entry primitives + the attrpath-placement primitive reach consumers
+# (tests + den-hoag's fold/nest engines) through the public surface; `core` itself stays unexported.
+# `setAttrByPath` is the nest mode's `[]⇒verbatim` placement (path list → nested attrset), exposed so
+# consumers call it instead of mirroring a local twin.
 // {
-  inherit (core) edgeSortKey traceEntryOf;
+  inherit (core) edgeSortKey traceEntryOf setAttrByPath;
 }

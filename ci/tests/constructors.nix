@@ -12,6 +12,7 @@ let
     edgeSortKey
     traceEntryOf
     renderEntry
+    setAttrByPath
     ;
 
   didThrow = e: !(builtins.tryEval (builtins.deepSeq e null)).success;
@@ -339,6 +340,20 @@ in
         in
         renderEntry (traceEntryOf e1) == renderEntry (traceEntryOf e0) + " | demand";
       expected = true;
+    };
+
+    # ── the attrpath-placement primitive on the public surface ──
+    # path list → nested attrset placing the value at the leaf.
+    test-setAttrByPath-nests = {
+      expr = setAttrByPath [ "a" "b" ] 1;
+      expected = {
+        a.b = 1;
+      };
+    };
+    # []⇒verbatim: the empty path returns the value with no wrapper.
+    test-setAttrByPath-empty-verbatim = {
+      expr = setAttrByPath [ ] 1;
+      expected = 1;
     };
   };
 }

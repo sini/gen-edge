@@ -191,6 +191,13 @@ a single edge (the typed-edge substrate keys edges by these). `edgeSortKey` is t
 key with the optional ` | K` fifth component; `traceEntryOf` is the structured identity entry (with the
 optional `kind` field); `renderEntry` renders one entry to its `renderTrace` line.
 
+### `setAttrByPath path value` → `value | attrset`
+
+The attrpath-placement primitive behind the `nest` mode's fold: `path` (a list of attr names) →
+a nested attrset placing `value` at the leaf; `[ ]` ⇒ `value` verbatim (the `[]⇒flat` convention —
+no wrapper). Byte-identical to nixpkgs `lib.setAttrByPath` semantics; exposed on the public surface so
+consumers place content without mirroring a local twin. `setAttrByPath [ "a" "b" ] 1 == { a.b = 1; }`.
+
 ## Schema versioning
 
 - **Schema v1** — collected/rewalk/synthesize arms with the §4.4 frozen field shapes, root/output
